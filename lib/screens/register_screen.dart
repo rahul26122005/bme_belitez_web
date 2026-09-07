@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart' as firebase_core;
 import 'package:image_picker/image_picker.dart';
 
 import '../models/event.dart';
@@ -939,7 +940,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         return;
       }
 
-      final mime = _mime(file.name) ?? 'image/jpeg';
+      final mime = _mime(file.name);
 
       if (!mounted) return;
 
@@ -1093,6 +1094,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             message: info.message,
             details: info.details,
             code: info.code,
+            error: e,
           );
         }
       } finally {
@@ -1111,6 +1113,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           details: 'Please try again. If the problem continues, '
               'contact 7448665022.',
           code: 'REG-999',
+          error: e,
         );
       }
     }
@@ -1214,8 +1217,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
     required String details,
     required String code,
     bool warning = false,
+    Object? error,
   }) async {
     if (!mounted) return;
+
+    final rawError = error?.toString().trim() ?? '';
+    final firebase = error is firebase_core.FirebaseException ? error : null;
+
+    final exactCode = firebase?.code.trim().isNotEmpty == true
+        ? firebase!.code
+        : code;
+
+    final exactMessage = firebase?.message?.trim().isNotEmpty == true
+        ? firebase!.message!.trim()
+        : rawError;
+
+    final technicalMessage =
+        exactMessage.isEmpty ? 'No additional error message was returned.' : exactMessage;
 
     await showDialog(
       context: context,
@@ -1253,6 +1271,84 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
               ),
               const SizedBox(height: 13),
+
+              // EXACT FIREBASE / EXCEPTION MESSAGE
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF4F4),
+                  borderRadius: BorderRadius.circular(11),
+                  border: Border.all(
+                    color: const Color(0xFFFFC7C7),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'FULL ERROR MESSAGE',
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 11,
+                        letterSpacing: .7,
+                      ),
+                    ),
+                    const SizedBox(height: 7),
+                    SelectableText(
+                      technicalMessage,
+                      style: const TextStyle(
+                        color: Colors.black87,
+                        fontSize: 11.5,
+                        height: 1.45,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    SelectableText(
+                      'Error Code: $exactCode',
+                      style: const TextStyle(
+                        color: Colors.black87,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    if (firebase?.plugin != null) ...[
+                      const SizedBox(height: 4),
+                      SelectableText(
+                        'Firebase Plugin: ${firebase!.plugin}',
+                        style: const TextStyle(
+                          color: Colors.black87,
+                          fontSize: 10.5,
+                        ),
+                      ),
+                    ],
+                    if (rawError.isNotEmpty &&
+                        rawError != technicalMessage) ...[
+                      const SizedBox(height: 8),
+                      const Text(
+                        'RAW EXCEPTION',
+                        style: TextStyle(
+                          color: Colors.red,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 10,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      SelectableText(
+                        rawError,
+                        style: const TextStyle(
+                          color: Colors.black87,
+                          fontSize: 10.5,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 13),
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
@@ -1268,15 +1364,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     fontWeight: FontWeight.w900,
                     height: 1.4,
                   ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Error Code: $code',
-                style: const TextStyle(
-                  color: AppTheme.muted,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
                 ),
               ),
             ],

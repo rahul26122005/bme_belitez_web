@@ -549,7 +549,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
         const SizedBox(height: 5),
         const Text(
-          'JPG, JPEG, PNG. Maximum 600 KB',
+          'JPG, JPEG, PNG, WEBP. Maximum 800 KB',
           softWrap: true,
           style: TextStyle(
             color: AppTheme.muted,
@@ -939,24 +939,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
         return;
       }
 
-      final mime = _mime(file.name);
-
-      if (mime == null) {
-        if (mounted) {
-          await _showErrorDialog(
-            title: 'Unsupported Image',
-            message: 'This image format is not supported.',
-            details: 'Please upload a JPG, JPEG, PNG or WEBP image.',
-            code: 'IMG-002',
-          );
-        }
-        return;
-      }
+      final mime = _mime(file.name) ?? 'image/jpeg';
 
       if (!mounted) return;
 
       setState(() {
-        screenshot = bytes;
+        screenshot = Uint8List.fromList(bytes);
         screenshotName = file.name;
         screenshotType = mime;
       });
@@ -975,7 +963,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
-  String? _mime(String filename) {
+  String _mime(String filename) {
     final value = filename.toLowerCase();
 
     if (value.endsWith('.jpg') || value.endsWith('.jpeg')) {
@@ -990,7 +978,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return 'image/webp';
     }
 
-    return null;
+    return 'image/jpeg';
   }
 
   Future<void> _submit() async {

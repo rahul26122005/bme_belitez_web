@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:image/image.dart' as img;
 
 import '../models/event.dart';
 import '../services/firebase_service.dart';
@@ -549,7 +550,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
         const SizedBox(height: 5),
         const Text(
-          'JPG, JPEG, PNG, WEBP. Maximum 800 KB',
+          'JPG, JPEG, PNG, WEBP. Maximum 10 MB',
           softWrap: true,
           style: TextStyle(
             color: AppTheme.muted,
@@ -915,21 +916,139 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       final bytes = await file.readAsBytes();
 
-      if (mounted) {
-        setState(() {
-          screenshot = Uint8List.fromList(bytes);
-          screenshotName = file.name;
-          screenshotType = _mime(file.name);
-        });
+      if (bytes.isEmpty) {
+        if (mounted) {
+          await _showErrorDialog(
+            title: 'Empty Image',
+            message: 'The selected image contains no data.',
+            details: 'Please choose another payment screenshot.',
+            code: 'IMG-000',
+          );
+        }
+        return;
       }
-    } catch (e, stack) {
+
+      if (bytes.lengthInBytes > 10 * 1024 * 1024) {
+        if (mounted) {
+          await _showErrorDialog(
+            title: 'Image Too Large',
+            message: 'The selected payment screenshot is larger than 10 MB.',
+            details: 'Please select a smaller JPG, JPEG, PNG or WEBP image (maximum 10 MB).',
+            code: 'IMG-001',
+          );
+        }
+        return;
+      }
+
+      // Firestore has a 1 MiB document limit. Compress the screenshot
+      // before it is ever sent to Firestore. The compressor keeps the
+      // image readable while targeting a much smaller file size.
+      final compressed = await _compressPaymentScreenshot(bytes);
+
+      if (compressed == null || compressed.isEmpty) {
+        if (mounted) {
+          await _showErrorDialog(
+            title: 'Image Compression Failed',
+            message: 'The payment screenshot could not be prepared.',
+            details: 'Please choose another JPG, JPEG, PNG or WEBP image and try again.',
+            code: 'IMG-004',
+          );
+        }
+        return;
+      }
+
       if (!mounted) return;
 
-      await _showFullErrorDialog(
-        title: 'Image Selection Error',
-        error: e,
-        stack: stack,
-      );
+      setState(() {
+        screenshot = compressed;
+        // Compression converts the uploaded image to JPEG.
+        screenshotName = 'payment_screenshot.jpg';
+        screenshotType = 'image/jpeg';
+      });
+    } catch (e, stack) {
+      _logError('Image selection error', e, stack);
+
+      if (mounted) {
+        await _showErrorDialog(
+          title: 'Unable to Select Image',
+          message: 'The payment screenshot could not be selected.',
+          details: 'Please try again. If the problem continues, '
+              'contact 7448665022.',
+          code: 'IMG-003',
+        );
+      }
+    }
+  }
+
+  Future<Uint8List?> _compressPaymentScreenshot(Uint8List original) async {
+    try {
+      final decoded = img.decodeImage(original);
+      if (decoded == null) return null;
+
+      // Keep enough resolution for transaction details and text to remain
+      // readable on the admin dashboard, but remove unnecessary camera
+      // resolution.
+      const maxDimension = 1600;
+      img.Image working = decoded;
+
+      final largest = working.width > working.height
+          ? working.width
+          : working.height;
+
+      if (largest > maxDimension) {
+        final scale = maxDimension / largest;
+        working = img.copyResize(
+          working,
+          width: (working.width * scale).round(),
+          height: (working.height * scale).round(),
+          interpolation: img.Interpolation.average,
+        );
+      }
+
+      // Try progressively stronger JPEG compression. The first successful
+      // result under 650 KB is used. Keeping this below 1 MiB leaves room
+      // for the other Firestore fields in the Registration document.
+      const targetBytes = 650 * 1024;
+      const qualities = <int>[82, 74, 66, 58, 50];
+
+      for (final quality in qualities) {
+        final encoded = img.encodeJpg(working, quality: quality);
+        if (encoded.length <= targetBytes) {
+          return Uint8List.fromList(encoded);
+        }
+      }
+
+      // If the image is still larger than the target, reduce the dimensions
+      // and try once more. This is still preferable to storing a multi-MB
+      // original screenshot in Firestore.
+      for (final dimension in <int>[1400, 1200, 1000]) {
+        final largestNow = working.width > working.height
+            ? working.width
+            : working.height;
+        if (largestNow > dimension) {
+          final scale = dimension / largestNow;
+          working = img.copyResize(
+            working,
+            width: (working.width * scale).round(),
+            height: (working.height * scale).round(),
+            interpolation: img.Interpolation.average,
+          );
+        }
+
+        final encoded = img.encodeJpg(working, quality: 55);
+        if (encoded.length <= targetBytes) {
+          return Uint8List.fromList(encoded);
+        }
+      }
+
+      // Last resort: return the most compressed version. The Firebase
+      // service will chunk it if it is still above the safe single-document
+      // threshold.
+      final finalBytes = img.encodeJpg(working, quality: 45);
+      return Uint8List.fromList(finalBytes);
+    } catch (e, stack) {
+      _logError('Image compression error', e, stack);
+      return null;
     }
   }
 
@@ -953,41 +1072,135 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Future<void> _submit() async {
     try {
+      if (!formKey.currentState!.validate()) {
+        await _showValidationDialog(
+          title: 'Check Your Details',
+          message: 'Some participant details are missing or invalid.',
+          details: 'Please correct the highlighted fields and submit again.',
+          code: 'FORM-001',
+        );
+        return;
+      }
+
+      if (year.isEmpty) {
+        await _showValidationDialog(
+          title: 'Year Required',
+          message: 'Please select your year.',
+          details: 'Choose 1st YEAR, 2nd YEAR, 3rd YEAR or FINAL YEAR.',
+          code: 'FORM-002',
+        );
+        return;
+      }
+
+      if (technical.isEmpty && nonTechnical.isEmpty) {
+        await _showValidationDialog(
+          title: 'Event Selection Required',
+          message: 'Please select at least one event.',
+          details: 'Choose a Technical event or a Non-Technical event.',
+          code: 'FORM-003',
+        );
+        return;
+      }
+
+      if (workshop.isEmpty) {
+        await _showValidationDialog(
+          title: 'Workshop Selection Required',
+          message: 'Please select YES or NO for Workshop.',
+          details: 'Complete the Workshop selection before submitting.',
+          code: 'FORM-004',
+        );
+        return;
+      }
+
+      if (food.isEmpty) {
+        await _showValidationDialog(
+          title: 'Food Selection Required',
+          message: 'Please select VEG or NON-VEG.',
+          details: 'Complete the Food selection before submitting.',
+          code: 'FORM-005',
+        );
+        return;
+      }
+
+      if (transaction.text.trim().isEmpty) {
+        await _showValidationDialog(
+          title: 'Transaction ID Required',
+          message: 'Please enter your payment transaction ID.',
+          details: 'Enter the transaction/reference ID shown in your '
+              'payment application.',
+          code: 'PAY-001',
+        );
+        return;
+      }
+
+      if (screenshot == null) {
+        await _showValidationDialog(
+          title: 'Payment Screenshot Required',
+          message: 'Please upload your payment screenshot.',
+          details: 'A payment screenshot is required before registration.',
+          code: 'PAY-002',
+        );
+        return;
+      }
+
       if (mounted) {
         setState(() => submittingCount++);
       }
 
-      final id = await FirebaseService.instance.createRegistration(
-        name: name.text,
-        college: college.text,
-        department: department.text,
-        contact: contact.text,
-        email: email.text,
-        year: year,
-        technicalEvent: technical.isEmpty ? '-' : technical,
-        nonTechnicalEvent: nonTechnical.isEmpty ? '-' : nonTechnical,
-        workshop: workshop,
-        food: food,
-        transactionId: transaction.text,
-        paymentBytes: screenshot!,
-        fileName: screenshotName,
-        contentType: screenshotType,
-      );
-
-      if (!mounted) return;
-
-      await _showSuccessDialog(id);
-    } catch (e, stack) {
-      if (mounted) {
-        await _showFullErrorDialog(
-          title: 'Registration Error',
-          error: e,
-          stack: stack,
+      try {
+        // NO timeout.
+        // NO duplicate check.
+        // NO "already submitting" guard.
+        final id = await FirebaseService.instance.createRegistration(
+          name: name.text.trim(),
+          college: college.text.trim(),
+          department: department.text.trim(),
+          contact: contact.text.trim(),
+          email: email.text.trim(),
+          year: year,
+          technicalEvent: technical.isEmpty ? '-' : technical,
+          nonTechnicalEvent: nonTechnical.isEmpty ? '-' : nonTechnical,
+          workshop: workshop,
+          food: food,
+          transactionId: transaction.text.trim(),
+          paymentBytes: screenshot!,
+          fileName: screenshotName,
+          contentType: screenshotType,
         );
+
+        if (!mounted) return;
+
+        await _showSuccessDialog(id);
+      } catch (e, stack) {
+        _logError('Registration submission error', e, stack);
+
+        if (mounted) {
+          final info = _firebaseErrorInfo(e);
+
+          await _showErrorDialog(
+            title: info.title,
+            message: info.message,
+            details: info.details,
+            code: info.code,
+          );
+        }
+      } finally {
+        if (mounted && submittingCount > 0) {
+          setState(() => submittingCount--);
+        }
       }
-    } finally {
-      if (mounted && submittingCount > 0) {
-        setState(() => submittingCount--);
+    } catch (e, stack) {
+      _logError('Unexpected registration error', e, stack);
+
+      if (mounted) {
+        await _showErrorDialog(
+          title: 'Unexpected Error',
+          message: 'Something unexpected happened while processing '
+              'your registration.',
+          details: 'Please try again. If the problem continues, '
+              'contact 7448665022.',
+          code: 'REG-999',
+        );
       }
     }
   }
@@ -1069,26 +1282,37 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Future<void> _showFullErrorDialog({
+  Future<void> _showValidationDialog({
     required String title,
-    required Object error,
-    StackTrace? stack,
+    required String message,
+    required String details,
+    required String code,
+  }) {
+    return _showErrorDialog(
+      title: title,
+      message: message,
+      details: details,
+      code: code,
+      warning: true,
+    );
+  }
+
+  Future<void> _showErrorDialog({
+    required String title,
+    required String message,
+    required String details,
+    required String code,
+    bool warning = false,
   }) async {
     if (!mounted) return;
-
-    final fullError = error.toString().trim().isEmpty
-        ? 'No error message was returned.'
-        : error.toString().trim();
-
-    final fullStack = stack?.toString().trim() ?? '';
 
     await showDialog(
       context: context,
       barrierDismissible: false,
       builder: (_) => AlertDialog(
-        icon: const Icon(
-          Icons.error_outline,
-          color: Colors.red,
+        icon: Icon(
+          warning ? Icons.warning_amber_rounded : Icons.error_outline,
+          color: warning ? Colors.orange : Colors.red,
           size: 50,
         ),
         title: Text(
@@ -1098,70 +1322,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'FULL ERROR MESSAGE',
-                style: TextStyle(
-                  color: Colors.red,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 12,
-                  letterSpacing: .7,
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
                 ),
               ),
-              const SizedBox(height: 8),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF4F4),
-                  borderRadius: BorderRadius.circular(11),
-                  border: Border.all(
-                    color: const Color(0xFFFFC7C7),
-                  ),
-                ),
-                child: SelectableText(
-                  fullError,
-                  style: const TextStyle(
-                    color: Colors.black87,
-                    fontSize: 12,
-                    height: 1.5,
-                  ),
+              const SizedBox(height: 10),
+              Text(
+                details,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: AppTheme.muted,
+                  fontSize: 12.5,
+                  height: 1.4,
                 ),
               ),
-              if (fullStack.isNotEmpty) ...[
-                const SizedBox(height: 13),
-                const Text(
-                  'STACK TRACE',
-                  style: TextStyle(
-                    color: Colors.red,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 11,
-                    letterSpacing: .7,
-                  ),
-                ),
-                const SizedBox(height: 7),
-                Container(
-                  width: double.infinity,
-                  constraints: const BoxConstraints(maxHeight: 260),
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF5F5F5),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AppTheme.border),
-                  ),
-                  child: SingleChildScrollView(
-                    child: SelectableText(
-                      fullStack,
-                      style: const TextStyle(
-                        color: Colors.black87,
-                        fontSize: 10,
-                        height: 1.4,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
               const SizedBox(height: 13),
               Container(
                 width: double.infinity,
@@ -1180,6 +1359,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                 ),
               ),
+              const SizedBox(height: 8),
+              Text(
+                'Error Code: $code',
+                style: const TextStyle(
+                  color: AppTheme.muted,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ],
           ),
         ),
@@ -1192,6 +1380,119 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
     );
   }
+
+  _FirebaseErrorInfo _firebaseErrorInfo(Object error) {
+    final raw = error.toString().toLowerCase();
+
+    if (raw.contains('permission-denied')) {
+      return const _FirebaseErrorInfo(
+        title: 'Permission Denied',
+        message: 'The registration could not be saved because '
+            'permission was denied.',
+        details: 'Please try again. If this continues, contact 7448665022.',
+        code: 'FB-001',
+      );
+    }
+
+    if (raw.contains('unavailable') ||
+        raw.contains('network') ||
+        raw.contains('internet')) {
+      return const _FirebaseErrorInfo(
+        title: 'Connection Problem',
+        message: 'The registration could not be completed because '
+            'the internet connection or Firebase service is '
+            'temporarily unavailable.',
+        details: 'Check your internet connection and try again. '
+            'If the problem continues, contact 7448665022.',
+        code: 'NET-001',
+      );
+    }
+
+    if (raw.contains('deadline-exceeded')) {
+      return const _FirebaseErrorInfo(
+        title: 'Server Response Delayed',
+        message: 'The server has not responded yet.',
+        details: 'There is no 45-second timeout in this page. '
+            'Please verify with 7448665022 before submitting '
+            'again if you are unsure whether it was saved.',
+        code: 'FB-002',
+      );
+    }
+
+    if (raw.contains('resource-exhausted')) {
+      return const _FirebaseErrorInfo(
+        title: 'Service Limit Reached',
+        message: 'The registration service has reached a temporary '
+            'usage limit.',
+        details: 'Please try again later or contact 7448665022.',
+        code: 'FB-003',
+      );
+    }
+
+    if (raw.contains('failed-precondition')) {
+      return const _FirebaseErrorInfo(
+        title: 'Service Configuration Error',
+        message: 'The registration service is not ready to process '
+            'this request.',
+        details: 'Please contact 7448665022 so the registration '
+            'system can be checked.',
+        code: 'FB-004',
+      );
+    }
+
+    if (raw.contains('invalid-argument')) {
+      return const _FirebaseErrorInfo(
+        title: 'Invalid Registration Data',
+        message: 'Some registration information could not be accepted.',
+        details: 'Please check your entered details and try again. '
+            'If the problem continues, contact 7448665022.',
+        code: 'FB-005',
+      );
+    }
+
+    if (raw.contains('unauthenticated')) {
+      return const _FirebaseErrorInfo(
+        title: 'Authentication Error',
+        message: 'The registration service could not authenticate '
+            'the request.',
+        details: 'Please try again. If the problem continues, '
+            'contact 7448665022.',
+        code: 'FB-006',
+      );
+    }
+
+    return const _FirebaseErrorInfo(
+      title: 'Registration Failed',
+      message: 'We could not complete your registration.',
+      details: 'Please try again. If the problem continues, '
+          'contact 7448665022.',
+      code: 'REG-008',
+    );
+  }
+
+  void _logError(
+    String message,
+    Object error,
+    StackTrace stack,
+  ) {
+    debugPrint('[B-ELITEZ] $message');
+    debugPrint('[B-ELITEZ] $error');
+    debugPrintStack(stackTrace: stack);
+  }
+}
+
+class _FirebaseErrorInfo {
+  final String title;
+  final String message;
+  final String details;
+  final String code;
+
+  const _FirebaseErrorInfo({
+    required this.title,
+    required this.message,
+    required this.details,
+    required this.code,
+  });
 }
 
 class _Notice extends StatelessWidget {
@@ -1240,5 +1541,3 @@ class _Notice extends StatelessWidget {
     );
   }
 }
-
-

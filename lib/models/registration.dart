@@ -18,8 +18,15 @@ class Registration {
   final String paymentStatus;
   final String status;
   final DateTime? registeredAt;
-  final Uint8List? paymentBytes;
+
+  // New Firestore-only chunked screenshot metadata.
+  final bool hasPaymentScreenshot;
+  final String paymentFileName;
   final String paymentContentType;
+  final int paymentSizeBytes;
+
+  // Backward compatibility with old documents that stored image_bytes directly.
+  final Uint8List? paymentBytes;
 
   const Registration({
     required this.docId,
@@ -38,25 +45,48 @@ class Registration {
     required this.paymentStatus,
     required this.status,
     required this.registeredAt,
-    required this.paymentBytes,
+    required this.hasPaymentScreenshot,
+    required this.paymentFileName,
     required this.paymentContentType,
+    required this.paymentSizeBytes,
+    required this.paymentBytes,
   });
 
   factory Registration.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
     final d = doc.data() ?? {};
     final p = (d['payment_screenshot'] as Map?)?.cast<String, dynamic>();
+    // Older versions stored image_bytes inside payment_screenshot.
+    // New compressed screenshots are stored as payment_screenshot_bytes
+    // directly on the Registration document.
     final raw = p?['image_bytes'];
+    final directRaw = d['payment_screenshot_bytes'];
 
-    Uint8List? bytes;
-    if (raw is Uint8List) {
-      bytes = raw;
+    Uint8List? legacyBytes;
+    if (directRaw is Uint8List) {
+      legacyBytes = directRaw;
+    } else if (directRaw is List) {
+      legacyBytes = Uint8List.fromList(directRaw.cast<int>());
+    } else if (raw is Uint8List) {
+      legacyBytes = raw;
     } else if (raw is List) {
-      bytes = Uint8List.fromList(raw.cast<int>());
+      legacyBytes = Uint8List.fromList(raw.cast<int>());
     }
 
     DateTime? date;
     final ts = d['registered_at'];
     if (ts is Timestamp) date = ts.toDate();
+
+    final metadataSize = p?['size_bytes'];
+    final size = metadataSize is int
+        ? metadataSize
+        : metadataSize is num
+            ? metadataSize.toInt()
+            : legacyBytes?.lengthInBytes ?? 0;
+
+    final hasImage = legacyBytes != null ||
+        p != null &&
+            ((p['total_chunks'] is num && (p['total_chunks'] as num) > 0) ||
+                p['storage_type'] == 'firestore_chunks');
 
     return Registration(
       docId: doc.id,
@@ -75,8 +105,11 @@ class Registration {
       paymentStatus: '${d['payment_status'] ?? 'pending'}'.toUpperCase(),
       status: '${d['status'] ?? 'registered'}'.toUpperCase(),
       registeredAt: date,
-      paymentBytes: bytes,
+      hasPaymentScreenshot: hasImage,
+      paymentFileName: '${p?['file_name'] ?? 'payment_screenshot'}',
       paymentContentType: '${p?['content_type'] ?? 'image/jpeg'}',
+      paymentSizeBytes: size,
+      paymentBytes: legacyBytes,
     );
   }
 }

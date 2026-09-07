@@ -59,7 +59,6 @@ class DefaultFirebaseOptions {
     messagingSenderId: '722590217364',
     projectId: 'bme-belitez',
     authDomain: 'bme-belitez.firebaseapp.com',
-    storageBucket: 'bme-belitez.firebasestorage.app',
     measurementId: 'G-WQWK1KYSKP',
   );
 }

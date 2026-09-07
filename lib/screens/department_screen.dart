@@ -236,7 +236,8 @@ class DepartmentScreen extends StatelessWidget {
                 ),
               ],
             );
-            if (stacked) return Column(
+            if (stacked) {
+              return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 content.children.first,
@@ -252,6 +253,7 @@ class DepartmentScreen extends StatelessWidget {
                 ]),
               ],
             );
+            }
             return Row(
               children: [
                 content.children[0],

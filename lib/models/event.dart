@@ -44,9 +44,10 @@ const events = <Event>[
     name: 'PPT Presentation',
     category: 'Technical',
     icon: '📊',
-    description: 'Present your innovative idea, research or project with confidence.',
+    description:
+        'Present your innovative idea, research or project with confidence.',
     rules: [
-      '1. Topic: Select a paper related to the given theme or technical field.',
+      '1. Topic: Select a paper related to the technical field.',
       '2. Originality: Present original work and avoid copied content.',
       '3. Time Limit: Complete the presentation within the allotted 5 minutes.',
       '4. PPT Format: Use clear headings, diagrams, images, and key points.',
@@ -59,11 +60,16 @@ const events = <Event>[
       '11. Coordinator number - M.Mano - 9566976009 / R.Deepika - 9384206295',
     ],
     maxTeamSize: 4,
-
-
     rounds: [
-      EventRound(title: 'Presentation', details: 'Present the selected technical topic with clear headings, diagrams, images and important points.', time: '5 minutes'),
-      EventRound(title: 'Q&A', details: 'Participants answer questions asked by judges after the presentation.'),
+      EventRound(
+          title: 'Presentation',
+          details:
+              'Present the selected technical topic with clear headings, diagrams, images and important points.',
+          time: '5 minutes'),
+      EventRound(
+          title: 'Q&A',
+          details:
+              'Participants answer questions asked by judges after the presentation.'),
     ],
   ),
   Event(
@@ -71,7 +77,8 @@ const events = <Event>[
     name: 'Poster Presentation',
     category: 'Technical',
     icon: '🧬',
-    description: 'Showcase your research through an attractive scientific poster.',
+    description:
+        'Showcase your research through an attractive scientific poster.',
     rules: [
       '1. Maximum 3 members.',
       '2. Participants must use poster size from A3 to A1 for Hardcopy.',
@@ -82,7 +89,11 @@ const events = <Event>[
     deadline: '15.08.2026',
     coordinator: 'R.Rahul - 7448665022 / Amutha - 9514070472.',
     rounds: [
-      EventRound(title: 'Poster Presentation', details: 'Present the poster with title, introduction, objectives, methodology, results, applications and conclusion.', time: '5 minutes'),
+      EventRound(
+          title: 'Poster Presentation',
+          details:
+              'Present the poster with title, introduction, objectives, methodology, results, applications and conclusion.',
+          time: '5 minutes'),
     ],
   ),
   Event(
@@ -90,7 +101,8 @@ const events = <Event>[
     name: 'Spot to Solve',
     category: 'Technical',
     icon: '🧠',
-    description: 'Think fast, solve smart and demonstrate technical problem-solving.',
+    description:
+        'Think fast, solve smart and demonstrate technical problem-solving.',
     rules: [
       'Team Event - 3 to 4 members per team.',
       'Round 1 : Knowledge Knockout.',
@@ -102,9 +114,24 @@ const events = <Event>[
     ],
     maxTeamSize: 4,
     rounds: [
-      EventRound(title: 'Round 1 – Knowledge Knockout', details: 'Diseases & Medical Equipment – Missing Words. Participants identify missing words.', questions: '20', time: '1 minute per question'),
-      EventRound(title: 'Round 2 – Mystery Medical Box', details: 'Medical Equipment Clue Challenge. Participants identify equipment from clues.', questions: '5', time: '45 sec'),
-      EventRound(title: 'Round 3 – Think About the Case Study', details: 'Disease-based case studies requiring identification of disease, appropriate equipment, diagnosis and treatment.', questions: '5', time: '2 minutes'),
+      EventRound(
+          title: 'Round 1 – Knowledge Knockout',
+          details:
+              'Diseases & Medical Equipment – Missing Words. Participants identify missing words.',
+          questions: '20',
+          time: '1 minute per question'),
+      EventRound(
+          title: 'Round 2 – Mystery Medical Box',
+          details:
+              'Medical Equipment Clue Challenge. Participants identify equipment from clues.',
+          questions: '5',
+          time: '45 sec'),
+      EventRound(
+          title: 'Round 3 – Think About the Case Study',
+          details:
+              'Disease-based case studies requiring identification of disease, appropriate equipment, diagnosis and treatment.',
+          questions: '5',
+          time: '2 minutes'),
     ],
   ),
   Event(
@@ -127,9 +154,21 @@ const events = <Event>[
     ],
     maxTeamSize: 4,
     rounds: [
-      EventRound(title: 'Round 1 – Memory Blast', details: 'Observe 15–20 medical/general objects or pictures for 30 seconds, then identify as many as possible.', time: '10–15 minutes'),
-      EventRound(title: 'Round 2 – Clue Connect', details: 'Connect medical and general clues to identify the correct answer.', time: '15–20 minutes'),
-      EventRound(title: 'Round 3 – Ultimate Mind Lock', details: 'Solve jumbled words, logic puzzles, number clues and medical clues in sequence to reveal the final code.', time: '25–30 minutes'),
+      EventRound(
+          title: 'Round 1 – Memory Blast',
+          details:
+              'Observe 15–20 medical/general objects or pictures for 30 seconds, then identify as many as possible.',
+          time: '10–15 minutes'),
+      EventRound(
+          title: 'Round 2 – Clue Connect',
+          details:
+              'Connect medical and general clues to identify the correct answer.',
+          time: '15–20 minutes'),
+      EventRound(
+          title: 'Round 3 – Ultimate Mind Lock',
+          details:
+              'Solve jumbled words, logic puzzles, number clues and medical clues in sequence to reveal the final code.',
+          time: '25–30 minutes'),
     ],
   ),
   Event(
@@ -137,7 +176,8 @@ const events = <Event>[
     name: 'Cinephoria & Short Film',
     category: 'Non-Technical',
     icon: '🎬',
-    description: 'Bring storytelling, creativity and cinematic vision to the screen.',
+    description:
+        'Bring storytelling, creativity and cinematic vision to the screen.',
     rules: [
       'Each Team Has 4 Members (Max).',
       'Strictly Smartphone Not Allowed.',
@@ -146,12 +186,31 @@ const events = <Event>[
     ],
     maxTeamSize: 4,
     rounds: [
-      EventRound(title: 'Round 1 – Guess the Movie by 4 Clues', details: 'Identify the movie from four clues.', time: 'Easy'),
-      EventRound(title: 'Round 2 – Guess the Actor, Actress, Director & Song', details: 'Identify the actor, actress, director or song associated with the movie/clues.', time: 'Moderate'),
-      EventRound(title: 'Round 3 – Guess the Movie by Frame', details: 'Identify a movie from a frame of a popular scene.', time: 'Moderate'),
-      EventRound(title: 'Round 4 – Find the Song by Acting', details: 'One participant acts out a song without speaking while teammates identify it.', time: 'Hard'),
-      EventRound(title: 'Optional – Cine Auction', details: 'Teams receive ₹1,000 virtual/event points and bid strategically on movie-related categories.'),
-      EventRound(title: 'Optional – Guess the Movie by Emoji', details: 'Identify a movie from a sequence of emojis.'),
+      EventRound(
+          title: 'Round 1 – Guess the Movie by 4 Clues',
+          details: 'Identify the movie from four clues.',
+          time: 'Easy'),
+      EventRound(
+          title: 'Round 2 – Guess the Actor, Actress, Director & Song',
+          details:
+              'Identify the actor, actress, director or song associated with the movie/clues.',
+          time: 'Moderate'),
+      EventRound(
+          title: 'Round 3 – Guess the Movie by Frame',
+          details: 'Identify a movie from a frame of a popular scene.',
+          time: 'Moderate'),
+      EventRound(
+          title: 'Round 4 – Find the Song by Acting',
+          details:
+              'One participant acts out a song without speaking while teammates identify it.',
+          time: 'Hard'),
+      EventRound(
+          title: 'Optional – Cine Auction',
+          details:
+              'Teams receive ₹1,000 virtual/event points and bid strategically on movie-related categories.'),
+      EventRound(
+          title: 'Optional – Guess the Movie by Emoji',
+          details: 'Identify a movie from a sequence of emojis.'),
     ],
   ),
   Event(
@@ -172,9 +231,20 @@ const events = <Event>[
     ],
     maxTeamSize: 4,
     rounds: [
-      EventRound(title: 'Round 1 – Fake or Fact', details: 'Identify whether each historical, general knowledge or funny statement is Fact or Fake.'),
-      EventRound(title: 'Round 2 – Think Tank', details: 'Two teams bid how many answers they can give in a category; the highest valid bidder must answer that many correctly within 30 seconds.', time: '30 seconds'),
-      EventRound(title: 'Round 3 – Sketch & Guess', details: 'One member draws a secret word without speaking while a teammate guesses it.', time: '1 minute'),
+      EventRound(
+          title: 'Round 1 – Fake or Fact',
+          details:
+              'Identify whether each historical, general knowledge or funny statement is Fact or Fake.'),
+      EventRound(
+          title: 'Round 2 – Think Tank',
+          details:
+              'Two teams bid how many answers they can give in a category; the highest valid bidder must answer that many correctly within 30 seconds.',
+          time: '30 seconds'),
+      EventRound(
+          title: 'Round 3 – Sketch & Guess',
+          details:
+              'One member draws a secret word without speaking while a teammate guesses it.',
+          time: '1 minute'),
     ],
   ),
   Event(
@@ -182,7 +252,8 @@ const events = <Event>[
     name: 'Team Building Activity',
     category: 'Non-Technical',
     icon: '🤝',
-    description: 'Collaborate, communicate and complete exciting team challenges.',
+    description:
+        'Collaborate, communicate and complete exciting team challenges.',
     rules: [
       '3 Members per Team | 4 Games | Timed Rounds.',
       '1. Catch the Ball – One hand only; ball drops = game over. 40 sec.',
@@ -195,10 +266,26 @@ const events = <Event>[
     ],
     maxTeamSize: 3,
     rounds: [
-      EventRound(title: 'Game 1 – Catch the Ball', details: 'Use only one hand. If the ball falls, the game ends immediately.', time: '40 seconds'),
-      EventRound(title: 'Game 2 – Make a Cup Pyramid Using a Balloon', details: 'Construct a cup pyramid with a balloon. Hands must not be used; use the mouth/blowing technique.', time: '2–3 minutes'),
-      EventRound(title: 'Game 3 – Handle the Ball with a Pen', details: 'Control/handle the ball using only a pen.', time: '1 minute 30 seconds'),
-      EventRound(title: 'Game 4 – Form a Cup Pyramid While Keeping the Balloon in the Air', details: 'Build a cup pyramid while continuously keeping the balloon in the air.', time: '1 minute 30 seconds'),
+      EventRound(
+          title: 'Game 1 – Catch the Ball',
+          details:
+              'Use only one hand. If the ball falls, the game ends immediately.',
+          time: '40 seconds'),
+      EventRound(
+          title: 'Game 2 – Make a Cup Pyramid Using a Balloon',
+          details:
+              'Construct a cup pyramid with a balloon. Hands must not be used; use the mouth/blowing technique.',
+          time: '2–3 minutes'),
+      EventRound(
+          title: 'Game 3 – Handle the Ball with a Pen',
+          details: 'Control/handle the ball using only a pen.',
+          time: '1 minute 30 seconds'),
+      EventRound(
+          title:
+              'Game 4 – Form a Cup Pyramid While Keeping the Balloon in the Air',
+          details:
+              'Build a cup pyramid while continuously keeping the balloon in the air.',
+          time: '1 minute 30 seconds'),
     ],
   ),
   Event(
@@ -206,7 +293,8 @@ const events = <Event>[
     name: 'Squad-Wars',
     category: 'Non-Technical',
     icon: '⚔️',
-    description: 'Compete as a squad through exciting collaborative challenges.',
+    description:
+        'Compete as a squad through exciting collaborative challenges.',
     rules: [
       '1. Team Event – 4 members per team, full map.',
       '2. No hacks. NO EMOTE.',
@@ -221,7 +309,8 @@ const events = <Event>[
     name: 'Workshop',
     category: 'Workshop',
     icon: '🛠️',
-    description: 'Learn practical concepts through an interactive hands-on session.',
+    description:
+        'Learn practical concepts through an interactive hands-on session.',
     rules: [
       'Title : Advanced respiratory care equipment hands-on training and technology.',
       '1. Hands-on Equipment Training – Practical training on modern respiratory care devices and their operation.',
@@ -231,7 +320,10 @@ const events = <Event>[
     ],
     maxTeamSize: 1,
     rounds: [
-      EventRound(title: 'Program Details', details: 'Advanced respiratory care equipment hands-on training and technology.'),
+      EventRound(
+          title: 'Program Details',
+          details:
+              'Advanced respiratory care equipment hands-on training and technology.'),
     ],
   ),
 ];

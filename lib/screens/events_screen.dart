@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../models/event.dart';
 import '../utils/theme.dart';
 import '../widgets/event_card.dart';
@@ -10,58 +11,143 @@ class EventsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final technical = events.where((e) => e.category == 'Technical').toList();
-    final nonTechnical = events.where((e) => e.category == 'Non-Technical').toList();
+    final technical =
+        events.where((e) => e.category == 'Technical').toList();
+
+    final nonTechnical =
+        events.where((e) => e.category == 'Non-Technical').toList();
+
+    final workshop = events
+        .where((e) => e.category.toLowerCase() == 'workshop')
+        .toList();
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF5F8FC),
       appBar: const SiteHeader(),
-      body: SingleChildScrollView(
-        child: Column(children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(24, 65, 24, 55),
-            color: AppTheme.navy,
-            child: const Center(
-              child: Text('B’ELITEZ 2K26 Events',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white, fontSize: 48, fontWeight: FontWeight.w900)),
-            ),
+      body: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              _hero(context),
+              _section(context, 'Technical Events', technical),
+              _section(context, 'Non-Technical Events', nonTechnical),
+              if (workshop.isNotEmpty)
+                _section(context, 'Workshop', workshop),
+              const SiteFooter(),
+            ],
           ),
-          _section(context, 'Technical Events', technical),
-          _section(context, 'Non-Technical Events', nonTechnical),
-          _section(context, 'Workshop', [events.last]),
-          const SiteFooter(),
-        ]),
+        ),
       ),
     );
   }
 
-  Widget _section(BuildContext context, String title, List<Event> list) => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 34),
-    child: ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 1200),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w900, color: AppTheme.text)),
-          const SizedBox(height: 16),
-          LayoutBuilder(builder: (_, c) {
-            final n = c.maxWidth > 900 ? 3 : c.maxWidth > 600 ? 2 : 1;
-            return GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: list.length,
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: n,
-                crossAxisSpacing: 18,
-                mainAxisSpacing: 18,
-                childAspectRatio: n == 1 ? 1.7 : 1.2,
-              ),
-              itemBuilder: (_, i) => EventCard(event: list[i]),
-            );
-          }),
-        ],
+  Widget _hero(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 36, 16, 38),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppTheme.navy, AppTheme.navy2],
+        ),
       ),
-    ),
-  );
+      child: LayoutBuilder(
+        builder: (_, constraints) {
+          final size = constraints.maxWidth < 360
+              ? 27.0
+              : constraints.maxWidth < 500
+                  ? 31.0
+                  : constraints.maxWidth < 800
+                      ? 38.0
+                      : 48.0;
+
+          return Text(
+            'B’ELITEZ 2K26 Events',
+            textAlign: TextAlign.center,
+            softWrap: true,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: size,
+              height: 1.1,
+              fontWeight: FontWeight.w900,
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _section(
+    BuildContext context,
+    String title,
+    List<Event> list,
+  ) {
+    if (list.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(10, 18, 10, 8),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1220),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(12, 16, 12, 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border.all(color: AppTheme.border),
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: LayoutBuilder(
+              builder: (_, constraints) {
+                final width = constraints.maxWidth;
+
+                final columns = width >= 1020
+                    ? 3
+                    : width >= 620
+                        ? 2
+                        : 1;
+
+                final gap = 12.0;
+                final cardWidth = columns == 1
+                    ? width
+                    : (width - gap * (columns - 1)) / columns;
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 2),
+                      child: Text(
+                        title,
+                        softWrap: true,
+                        style: TextStyle(
+                          color: AppTheme.text,
+                          fontSize: width < 450 ? 22 : 30,
+                          height: 1.15,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Wrap(
+                      spacing: gap,
+                      runSpacing: gap,
+                      children: list
+                          .map(
+                            (event) => SizedBox(
+                              width: cardWidth,
+                              child: EventCard(event: event),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

@@ -58,6 +58,7 @@ const events = <Event>[
       '9. References & Plagiarism: Include references and ensure the paper is plagiarism-free.',
       '10. Discipline & Decision: Maintain professional conduct; judges’ decision is final, and rule violations may lead to disqualification.',
       '11. Coordinator number - M.Mano - 9566976009 / R.Deepika - 9384206295',
+      '12. Send your ppt to belitez26ppt@gmail.com'
     ],
     maxTeamSize: 4,
     rounds: [

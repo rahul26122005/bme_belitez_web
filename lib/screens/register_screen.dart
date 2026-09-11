@@ -45,8 +45,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String screenshotName = '';
   String screenshotType = 'image/jpeg';
 
-  // Visual-only counter. It NEVER disables submission.
-  int submittingCount = 0;
+  // Prevents multiple registrations from being submitted at the same time.
+  // While true, the submit button is disabled and shows a loading indicator.
+  bool _isSubmitting = false;
 
   final technicalEvents =
       events.where((e) => e.category == 'Technical').toList();
@@ -72,82 +73,172 @@ class _RegisterScreenState extends State<RegisterScreen> {
       appBar: const SiteHeader(showBack: true),
       body: SafeArea(
         top: false,
-        child: SingleChildScrollView(
-          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-          child: Column(
-            children: [
-              const _Notice(),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(10, 12, 10, 35),
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              child: Column(
+                children: [
+                  const _Notice(),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(10, 12, 10, 35),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 1120),
+                        child: Form(
+                          key: formKey,
+                          child: Column(
+                            children: [
+                              _section(
+                                '01',
+                                'Participant Details',
+                                'All fields are required',
+                                _participantSection(),
+                              ),
+                              const SizedBox(height: 12),
+                              _section(
+                                '02',
+                                'Technical Event *',
+                                'Select any one event',
+                                _eventGrid(
+                                  technicalEvents,
+                                  technical,
+                                  (event) => setState(
+                                    () => technical = technical == event.name
+                                        ? ''
+                                        : event.name,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              _section(
+                                '03',
+                                'Non-Technical Event',
+                                'Optional',
+                                _eventGrid(
+                                  nonTechnicalEvents,
+                                  nonTechnical,
+                                  (event) => setState(
+                                    () => nonTechnical =
+                                        nonTechnical == event.name
+                                            ? ''
+                                            : event.name,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              _section(
+                                '04',
+                                'Workshop & Food',
+                                'Complete your preferences',
+                                _preferencesSection(),
+                              ),
+                              const SizedBox(height: 12),
+                              _section(
+                                '05',
+                                'Payment',
+                                'Complete payment before submitting',
+                                _paymentSection(),
+                              ),
+                              const SizedBox(height: 12),
+                              _contactSection(),
+                              const SizedBox(height: 12),
+                              _submitBar(),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SiteFooter(),
+                ],
+              ),
+            ),
+
+            // ============================================================
+            // FULL-SCREEN REGISTRATION LOADING OVERLAY
+            // ============================================================
+            // This appears immediately after validation succeeds and
+            // remains visible until Firebase registration finishes.
+            // It also prevents the user from tapping anywhere else
+            // while the registration request is in progress.
+            if (_isSubmitting)
+              Positioned.fill(
+                child: ModalBarrier(
+                  dismissible: false,
+                  color: Colors.black54,
+                ),
+              ),
+
+            if (_isSubmitting)
+              Positioned.fill(
                 child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 1120),
-                    child: Form(
-                      key: formKey,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: Container(
+                      width: 230,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 22,
+                        vertical: 24,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        boxShadow: const [
+                          BoxShadow(
+                            blurRadius: 24,
+                            spreadRadius: 2,
+                            offset: Offset(0, 8),
+                            color: Colors.black26,
+                          ),
+                        ],
+                      ),
                       child: Column(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          _section(
-                            '01',
-                            'Participant Details',
-                            'All fields are required',
-                            _participantSection(),
-                          ),
-                          const SizedBox(height: 12),
-                          _section(
-                            '02',
-                            'Technical Event *',
-                            'Select any one event',
-                            _eventGrid(
-                              technicalEvents,
-                              technical,
-                              (event) => setState(
-                                () => technical =
-                                    technical == event.name ? '' : event.name,
-                              ),
+                          const SizedBox(
+                            width: 52,
+                            height: 52,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 5,
+                              color: AppTheme.teal,
                             ),
                           ),
-                          const SizedBox(height: 12),
-                          _section(
-                            '03',
-                            'Non-Technical Event',
-                            'Optional',
-                            _eventGrid(
-                              nonTechnicalEvents,
-                              nonTechnical,
-                              (event) => setState(
-                                () => nonTechnical = nonTechnical == event.name
-                                    ? ''
-                                    : event.name,
-                              ),
+                          const SizedBox(height: 18),
+                          const Text(
+                            'Submitting Registration',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
                             ),
                           ),
-                          const SizedBox(height: 12),
-                          _section(
-                            '04',
-                            'Workshop & Food',
-                            'Complete your preferences',
-                            _preferencesSection(),
+                          const SizedBox(height: 7),
+                          const Text(
+                            'Please wait...',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: AppTheme.muted,
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                          const SizedBox(height: 12),
-                          _section(
-                            '05',
-                            'Payment',
-                            'Complete payment before submitting',
-                            _paymentSection(),
+                          const SizedBox(height: 5),
+                          const Text(
+                            'Do not close or refresh this page.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: AppTheme.muted,
+                              fontSize: 11,
+                            ),
                           ),
-                          const SizedBox(height: 12),
-                          _contactSection(),
-                          const SizedBox(height: 12),
-                          _submitBar(),
                         ],
                       ),
                     ),
                   ),
                 ),
               ),
-              const SiteFooter(),
-            ],
-          ),
+          ],
         ),
       ),
     );
@@ -935,7 +1026,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Widget _submitBar() {
-    final processing = submittingCount > 0;
+    final processing = _isSubmitting;
 
     return Container(
       width: double.infinity,
@@ -990,7 +1081,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(
-                    onPressed: _submit,
+                    onPressed: _isSubmitting ? null : _submit,
                     style: FilledButton.styleFrom(
                       backgroundColor: AppTheme.teal,
                       foregroundColor: AppTheme.dark,
@@ -1019,7 +1110,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               const SizedBox(width: 8),
                               Flexible(
                                 child: Text(
-                                  'Submit Again ($submittingCount)',
+                                  'Submitting...',
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   textAlign: TextAlign.center,
@@ -1097,7 +1188,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               Flexible(
                 flex: 0,
                 child: FilledButton(
-                  onPressed: _submit,
+                  onPressed: _isSubmitting ? null : _submit,
                   style: FilledButton.styleFrom(
                     backgroundColor: AppTheme.teal,
                     foregroundColor: AppTheme.dark,
@@ -1124,7 +1215,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              'Submit Again ($submittingCount)',
+                              'Submitting...',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
@@ -1317,6 +1408,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _submit() async {
+    // Prevent multiple simultaneous submissions.
+    if (_isSubmitting) return;
+
     try {
       if (!formKey.currentState!.validate()) {
         await _showValidationDialog(
@@ -1389,64 +1483,50 @@ class _RegisterScreenState extends State<RegisterScreen> {
         return;
       }
 
-      if (mounted) {
-        setState(() => submittingCount++);
-      }
+      // All validation is complete. Lock the form immediately before
+      // the Firebase submission so rapid multiple clicks cannot create
+      // multiple registrations.
+      if (!mounted) return;
 
-      try {
-        // NO timeout.
-        // NO duplicate check.
-        // NO "already submitting" guard.
-        final id = await FirebaseService.instance.createRegistration(
-          name: name.text.trim(),
-          college: college.text.trim(),
-          department: department.text.trim(),
-          contact: contact.text.trim(),
-          email: email.text.trim(),
-          year: year,
-          technicalEvent: technical.isEmpty ? '-' : technical,
-          nonTechnicalEvent: nonTechnical.isEmpty ? '-' : nonTechnical,
-          workshop: workshop,
-          food: food,
-          transactionId: transaction.text.trim(),
-          paymentBytes: screenshot!,
-          fileName: screenshotName,
-          contentType: screenshotType,
-        );
+      setState(() => _isSubmitting = true);
 
-        if (!mounted) return;
+      // Only one createRegistration() call can be active at a time.
+      final id = await FirebaseService.instance.createRegistration(
+        name: name.text.trim(),
+        college: college.text.trim(),
+        department: department.text.trim(),
+        contact: contact.text.trim(),
+        email: email.text.trim(),
+        year: year,
+        technicalEvent: technical.isEmpty ? '-' : technical,
+        nonTechnicalEvent: nonTechnical.isEmpty ? '-' : nonTechnical,
+        workshop: workshop,
+        food: food,
+        transactionId: transaction.text.trim(),
+        paymentBytes: screenshot!,
+        fileName: screenshotName,
+        contentType: screenshotType,
+      );
 
-        await _showSuccessDialog(id);
-      } catch (e, stack) {
-        _logError('Registration submission error', e, stack);
+      if (!mounted) return;
 
-        if (mounted) {
-          final info = _firebaseErrorInfo(e);
-
-          await _showErrorDialog(
-            title: info.title,
-            message: info.message,
-            details: info.details,
-            code: info.code,
-          );
-        }
-      } finally {
-        if (mounted && submittingCount > 0) {
-          setState(() => submittingCount--);
-        }
-      }
+      await _showSuccessDialog(id);
     } catch (e, stack) {
-      _logError('Unexpected registration error', e, stack);
+      _logError('Registration submission error', e, stack);
 
       if (mounted) {
+        final info = _firebaseErrorInfo(e);
+
         await _showErrorDialog(
-          title: 'Unexpected Error',
-          message: 'Something unexpected happened while processing '
-              'your registration.',
-          details: 'Please try again. If the problem continues, '
-              'contact 7448665022.',
-          code: 'REG-999',
+          title: info.title,
+          message: info.message,
+          details: info.details,
+          code: info.code,
         );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
       }
     }
   }

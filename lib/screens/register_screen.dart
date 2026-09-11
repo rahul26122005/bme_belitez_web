@@ -849,7 +849,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Future<void> _openWhatsAppGroup() async {
     try {
-      if (whatsappGroupUrl.contains('REPLACE_WITH_YOUR_GROUP_LINK')) {
+      if (whatsappGroupUrl.contains('https://chat.whatsapp.com/IVEIFgk4dNh947r5Et4Qul')) {
         if (mounted) {
           await _showErrorDialog(
             title: 'WhatsApp Link Not Configured',
@@ -1178,9 +1178,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         if (mounted) {
           await _showErrorDialog(
             title: 'Image Too Large',
-            message: 'The selected payment screenshot is larger than 10 MB.',
+            message: 'The selected payment screenshot is larger than 500 kb.',
             details:
-                'Please select a smaller JPG, JPEG, PNG or WEBP image (maximum 10 MB).',
+                'Please select a smaller JPG, JPEG, PNG or WEBP image (maximum 500 kb).',
             code: 'IMG-001',
           );
         }

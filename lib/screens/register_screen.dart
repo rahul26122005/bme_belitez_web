@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image/image.dart' as img;
+import 'package:url_launcher/url_launcher.dart';
 
 import '../models/event.dart';
 import '../services/firebase_service.dart';
@@ -10,6 +11,12 @@ import '../utils/theme.dart';
 import '../widgets/event_card.dart';
 import '../widgets/site_footer.dart';
 import '../widgets/site_header.dart';
+
+// Replace this with your actual B’ELITEZ 2K26 WhatsApp group invite link.
+const String whatsappGroupUrl =
+    'https://chat.whatsapp.com/IVEIFgk4dNh947r5Et4Qul';
+
+const String helpDeskEmail = 'belitez2k26@gmail.com';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -128,6 +135,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             'Complete payment before submitting',
                             _paymentSection(),
                           ),
+                          const SizedBox(height: 12),
+                          _contactSection(),
                           const SizedBox(height: 12),
                           _submitBar(),
                         ],
@@ -550,7 +559,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
         const SizedBox(height: 5),
         const Text(
-          'JPG, JPEG, PNG, WEBP. Maximum 10 MB',
+          'JPG, JPEG, PNG, WEBP. Maximum 500 kb',
           softWrap: true,
           style: TextStyle(
             color: AppTheme.muted,
@@ -686,6 +695,243 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ],
       ),
     );
+  }
+
+  // ========================================================
+  // WHATSAPP + HELPDESK
+  // ========================================================
+
+  Widget _contactSection() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: AppTheme.border),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: LayoutBuilder(
+        builder: (_, constraints) {
+          final twoColumns = constraints.maxWidth >= 680;
+          final gap = 12.0;
+          final width = twoColumns
+              ? (constraints.maxWidth - gap) / 2
+              : constraints.maxWidth;
+
+          return Wrap(
+            spacing: gap,
+            runSpacing: gap,
+            children: [
+              SizedBox(
+                width: width,
+                child: _contactCard(
+                  icon: Icons.groups_rounded,
+                  title: 'Join on WhatsApp',
+                  description:
+                      'Join our official WhatsApp group for event updates, '
+                      'announcements and important information.',
+                  actionText: 'Join WhatsApp Group →',
+                  iconColor: const Color(0xFF25D366),
+                  onTap: _openWhatsAppGroup,
+                ),
+              ),
+              SizedBox(
+                width: width,
+                child: _contactCard(
+                  icon: Icons.support_agent_rounded,
+                  title: 'HelpDesk :',
+                  description:
+                      'For any queries, contact through the following mail:',
+                  actionText: helpDeskEmail,
+                  iconColor: AppTheme.teal,
+                  onTap: _openHelpDeskEmail,
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _contactCard({
+    required IconData icon,
+    required String title,
+    required String description,
+    required String actionText,
+    required Color iconColor,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(17),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(17),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(16, 17, 16, 16),
+          decoration: BoxDecoration(
+            border: Border.all(color: AppTheme.border),
+            borderRadius: BorderRadius.circular(17),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: iconColor.withOpacity(0.10),
+                      borderRadius: BorderRadius.circular(11),
+                    ),
+                    child: Icon(
+                      icon,
+                      color: iconColor,
+                      size: 21,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      title,
+                      softWrap: true,
+                      style: const TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.w900,
+                        height: 1.15,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                description,
+                softWrap: true,
+                style: const TextStyle(
+                  color: AppTheme.muted,
+                  fontSize: 13.5,
+                  height: 1.45,
+                ),
+              ),
+              const SizedBox(height: 12),
+              InkWell(
+                onTap: onTap,
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 2,
+                    horizontal: 1,
+                  ),
+                  child: Text(
+                    actionText,
+                    softWrap: true,
+                    style: TextStyle(
+                      color: AppTheme.teal,
+                      decoration: TextDecoration.underline,
+                      decorationThickness: 1.5,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openWhatsAppGroup() async {
+    try {
+      if (whatsappGroupUrl.contains('REPLACE_WITH_YOUR_GROUP_LINK')) {
+        if (mounted) {
+          await _showErrorDialog(
+            title: 'WhatsApp Link Not Configured',
+            message: 'The WhatsApp group link has not been added yet.',
+            details:
+                'Replace whatsappGroupUrl at the top of register_screen.dart '
+                'with your actual WhatsApp group invite link.',
+            code: 'LINK-001',
+            warning: true,
+          );
+        }
+        return;
+      }
+
+      final uri = Uri.parse(whatsappGroupUrl);
+      final opened = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+
+      if (!opened && mounted) {
+        await _showErrorDialog(
+          title: 'Unable to Open WhatsApp',
+          message: 'The WhatsApp group link could not be opened.',
+          details:
+              'Please check your internet connection or open the group link '
+              'manually in WhatsApp.',
+          code: 'LINK-002',
+        );
+      }
+    } catch (e, stack) {
+      _logError('WhatsApp link error', e, stack);
+
+      if (mounted) {
+        await _showErrorDialog(
+          title: 'Unable to Open WhatsApp',
+          message: 'The WhatsApp group link could not be opened.',
+          details:
+              'Please try again. If the problem continues, contact 7448665022.',
+          code: 'LINK-003',
+        );
+      }
+    }
+  }
+
+  Future<void> _openHelpDeskEmail() async {
+    try {
+      final uri = Uri(
+        scheme: 'mailto',
+        path: helpDeskEmail,
+        queryParameters: const {
+          'subject': 'B’ELITEZ 2K26 HelpDesk Query',
+        },
+      );
+
+      final opened = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+
+      if (!opened && mounted) {
+        await _showErrorDialog(
+          title: 'Unable to Open Email',
+          message: 'No email application could be opened.',
+          details: 'Please send your query manually to $helpDeskEmail.',
+          code: 'MAIL-001',
+          warning: true,
+        );
+      }
+    } catch (e, stack) {
+      _logError('HelpDesk email error', e, stack);
+
+      if (mounted) {
+        await _showErrorDialog(
+          title: 'Unable to Open Email',
+          message: 'The HelpDesk email could not be opened.',
+          details: 'Please contact the HelpDesk manually at $helpDeskEmail.',
+          code: 'MAIL-002',
+          warning: true,
+        );
+      }
+    }
   }
 
   Widget _submitBar() {
@@ -933,7 +1179,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
           await _showErrorDialog(
             title: 'Image Too Large',
             message: 'The selected payment screenshot is larger than 10 MB.',
-            details: 'Please select a smaller JPG, JPEG, PNG or WEBP image (maximum 10 MB).',
+            details:
+                'Please select a smaller JPG, JPEG, PNG or WEBP image (maximum 10 MB).',
             code: 'IMG-001',
           );
         }
@@ -950,7 +1197,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
           await _showErrorDialog(
             title: 'Image Compression Failed',
             message: 'The payment screenshot could not be prepared.',
-            details: 'Please choose another JPG, JPEG, PNG or WEBP image and try again.',
+            details:
+                'Please choose another JPG, JPEG, PNG or WEBP image and try again.',
             code: 'IMG-004',
           );
         }
@@ -991,9 +1239,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       const maxDimension = 1600;
       img.Image working = decoded;
 
-      final largest = working.width > working.height
-          ? working.width
-          : working.height;
+      final largest =
+          working.width > working.height ? working.width : working.height;
 
       if (largest > maxDimension) {
         final scale = maxDimension / largest;
@@ -1022,9 +1269,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       // and try once more. This is still preferable to storing a multi-MB
       // original screenshot in Firestore.
       for (final dimension in <int>[1400, 1200, 1000]) {
-        final largestNow = working.width > working.height
-            ? working.width
-            : working.height;
+        final largestNow =
+            working.width > working.height ? working.width : working.height;
         if (largestNow > dimension) {
           final scale = dimension / largestNow;
           working = img.copyResize(

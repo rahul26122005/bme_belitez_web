@@ -849,7 +849,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Future<void> _openWhatsAppGroup() async {
     try {
-      if (whatsappGroupUrl.contains('https://chat.whatsapp.com/IVEIFgk4dNh947r5Et4Qul')) {
+      if (whatsappGroupUrl.contains('REPLACE_WITH_YOUR_GROUP_LINK')) {
         if (mounted) {
           await _showErrorDialog(
             title: 'WhatsApp Link Not Configured',

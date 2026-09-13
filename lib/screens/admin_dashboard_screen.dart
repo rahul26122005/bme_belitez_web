@@ -586,7 +586,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       ),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(20),
-                        color: AppTheme.teal.withOpacity(.08),
+                        color: AppTheme.teal.withValues(alpha: 0.08),
                       ),
                       child: Text(
                         '${rows.length}',
@@ -766,8 +766,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
         color: good
-            ? Colors.green.withOpacity(.10)
-            : Colors.orange.withOpacity(.10),
+            ? Colors.green.withValues(alpha: 0.10)
+            : Colors.orange.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(

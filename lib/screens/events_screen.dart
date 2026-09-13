@@ -23,6 +23,7 @@ class EventsScreen extends StatelessWidget {
         child: SingleChildScrollView(
           child: Column(
             children: [
+              const _Notice(),
               _hero(),
               _section('Technical Events', technical),
               _section('Non-Technical Events', nonTechnical),
@@ -118,3 +119,63 @@ class EventsScreen extends StatelessWidget {
     );
   }
 }
+
+class _Notice extends StatelessWidget {
+  const _Notice();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 10,
+      ),
+      color: const Color(0xFFFFF8F0),
+      child: const Center(
+        child: Column(
+          children: [
+            Text(
+              '📌 Important: Accommodation will not be provided.',
+              textAlign: TextAlign.center,
+              softWrap: true,
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 11.5,
+                height: 1.35,
+              ),
+            ),
+            SizedBox(height: 5),
+            Text(
+              '📌 Important: There is no specific deadline for registration at this time. Registration will remain open until further notice.',
+              textAlign: TextAlign.center,
+              softWrap: true,
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                color: Colors.green,
+                fontSize: 11.5,
+                height: 1.35,
+              ),
+            ),
+            SizedBox(height: 5),
+            Text(
+              'Registration is successful ONLY when the '
+              'Registration Successful message appears. '
+              'Please verify your registration by contacting '
+              '7448665022.',
+              textAlign: TextAlign.center,
+              softWrap: true,
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                color: Colors.red,
+                fontSize: 11,
+                height: 1.4,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+

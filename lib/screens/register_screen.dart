@@ -876,7 +876,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     width: 38,
                     height: 38,
                     decoration: BoxDecoration(
-                      color: iconColor.withOpacity(0.10),
+                      color: iconColor.withValues(alpha: .10),
                       borderRadius: BorderRadius.circular(11),
                     ),
                     child: Icon(
@@ -1389,23 +1389,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
-  String _mime(String filename) {
-    final value = filename.toLowerCase();
-
-    if (value.endsWith('.jpg') || value.endsWith('.jpeg')) {
-      return 'image/jpeg';
-    }
-
-    if (value.endsWith('.png')) {
-      return 'image/png';
-    }
-
-    if (value.endsWith('.webp')) {
-      return 'image/webp';
-    }
-
-    return 'image/jpeg';
-  }
 
   Future<void> _submit() async {
     // Prevent multiple simultaneous submissions.
@@ -1842,6 +1825,18 @@ class _Notice extends StatelessWidget {
               softWrap: true,
               style: TextStyle(
                 fontWeight: FontWeight.w900,
+                fontSize: 11.5,
+                height: 1.35,
+              ),
+            ),
+            SizedBox(height: 5),
+            Text(
+              '📌 Important: There is no specific deadline for registration at this time. Registration will remain open until further notice.',
+              textAlign: TextAlign.center,
+              softWrap: true,
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                color: Colors.green,
                 fontSize: 11.5,
                 height: 1.35,
               ),
